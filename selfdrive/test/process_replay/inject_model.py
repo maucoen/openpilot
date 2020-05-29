@@ -1,14 +1,12 @@
 #!/usr/bin/env python3
 
-import os
 import time
 
-
 from tqdm import tqdm
+
+import selfdrive.manager as manager
 from cereal.messaging import PubMaster, recv_one, sub_sock
 from tools.lib.framereader import FrameReader
-import subprocess
-import selfdrive.manager as manager
 
 
 def rreplace(s, old, new, occurrence):
@@ -21,7 +19,6 @@ def regen_model(msgs, pm, frame_reader, model_sock):
   for msg in msgs:
     if msg.which() == 'liveCalibration':
       pm.send('liveCalibration', msg.as_builder())
-
 
   out_msgs = []
   fidx = 0
@@ -85,8 +82,3 @@ def inject_model(msgs, segment_name):
   assert abs(len(new_msgs) - len(list(msgs))) < 2
 
   return new_msgs
-
-
-
-if __name__ == "__main__":
-  inject_model("0375fdf7b1ce594d|2019-06-13--08-32-25/3")

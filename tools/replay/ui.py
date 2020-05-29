@@ -5,9 +5,9 @@ import sys
 
 os.environ["OMP_NUM_THREADS"] = "1"
 
-import cv2
+import cv2  # pylint: disable=import-error
 import numpy as np
-import pygame
+import pygame  # pylint: disable=import-error
 
 from common.basedir import BASEDIR
 from common.transformations.camera import FULL_FRAME_SIZE, eon_intrinsics
@@ -63,7 +63,6 @@ def ui_thread(addr, frame_address):
 
   camera_surface = pygame.surface.Surface((640, 480), 0, 24).convert()
   cameraw_surface = pygame.surface.Surface(MODEL_INPUT_SIZE, 0, 24).convert()
-  cameraw_test_surface = pygame.surface.Surface(MODEL_INPUT_SIZE, 0, 24)
   top_down_surface = pygame.surface.Surface((UP.lidar_x, UP.lidar_y),0,8)
 
   frame = messaging.sub_sock('frame', addr=addr, conflate=True)
@@ -111,7 +110,6 @@ def ui_thread(addr, frame_address):
 
   draw_plots = init_plots(plot_arr, name_to_arr_idx, plot_xlims, plot_ylims, plot_names, plot_colors, plot_styles, bigplots=True)
 
-  counter = 0
   while 1:
     list(pygame.event.get())
 

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-import zmq
+# pylint: skip-file
+
 import cereal.messaging as messaging
-from cereal.services import service_list
 import pcap
 
 def main():
@@ -15,4 +15,3 @@ def main():
 
 if __name__ == "__main__":
   main()
-

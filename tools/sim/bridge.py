@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
-import carla
-import os
-import time, termios, tty, sys
+# type: ignore
+import time
 import math
 import atexit
 import numpy as np
@@ -9,7 +8,6 @@ import threading
 import random
 import cereal.messaging as messaging
 import argparse
-import queue
 from common.params import Params
 from common.realtime import Ratekeeper
 from lib.can import can_function, sendcan_function
@@ -19,6 +17,7 @@ from selfdrive.car.honda.values import CruiseButtons
 parser = argparse.ArgumentParser(description='Bridge between CARLA and openpilot.')
 parser.add_argument('--autopilot', action='store_true')
 parser.add_argument('--joystick', action='store_true')
+parser.add_argument('--realmonitoring', action='store_true')
 args = parser.parse_args()
 
 pm = messaging.PubMaster(['frame', 'sensorEvents', 'can'])
@@ -68,6 +67,8 @@ def health_function():
     rk.keep_time()
 
 def fake_driver_monitoring():
+  if args.realmonitoring:
+    return
   pm = messaging.PubMaster(['driverState'])
   while 1:
     dat = messaging.new_message('driverState')
@@ -79,7 +80,6 @@ def go(q):
   threading.Thread(target=health_function).start()
   threading.Thread(target=fake_driver_monitoring).start()
 
-  import carla
   client = carla.Client("127.0.0.1", 2000)
   client.set_timeout(5.0)
   world = client.load_world('Town04')
@@ -198,7 +198,7 @@ def go(q):
 
     vel = vehicle.get_velocity()
     speed = math.sqrt(vel.x**2 + vel.y**2 + vel.z**2) * 3.6
-    can_function(pm, speed, fake_wheel.angle, rk.frame, cruise_button=cruise_button)
+    can_function(pm, speed, fake_wheel.angle, rk.frame, cruise_button=cruise_button, is_engaged=is_openpilot_engaged)
 
     if rk.frame%1 == 0: # 20Hz?
       throttle_op, brake_op, steer_torque_op = sendcan_function(sendcan)
@@ -231,7 +231,7 @@ if __name__ == "__main__":
     print("WARNING: NO CARLA")
     while 1:
       time.sleep(1)
-    
+
   from multiprocessing import Process, Queue
   q = Queue()
   p = Process(target=go, args=(q,))
@@ -246,4 +246,3 @@ if __name__ == "__main__":
     # start input poll for keyboard
     from lib.keyboard_ctrl import keyboard_poll_thread
     keyboard_poll_thread(q)
-

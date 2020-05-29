@@ -1,16 +1,16 @@
-import platform
 from collections import namedtuple
+from typing import Any, Dict, Tuple
 
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
-import pygame
+import pygame  # pylint: disable=import-error
 
-from tools.lib.lazy_property import lazy_property
-from selfdrive.config import UIParams as UP
 from selfdrive.config import RADAR_TO_CAMERA
+from selfdrive.config import UIParams as UP
 from selfdrive.controls.lib.lane_planner import (compute_path_pinv,
                                                  model_polyfit)
+from tools.lib.lazy_property import lazy_property
 
 RED = (255, 0, 0)
 GREEN = (0, 255, 0)
@@ -35,7 +35,7 @@ METER_WIDTH = 20
 
 ModelUIData = namedtuple("ModelUIData", ["cpath", "lpath", "rpath", "lead", "lead_future"])
 
-_COLOR_CACHE = {}
+_COLOR_CACHE : Dict[Tuple[int, int, int], Any] = {}
 def find_color(lidar_surface, color):
   if color in _COLOR_CACHE:
     return _COLOR_CACHE[color]
@@ -109,10 +109,6 @@ def draw_lead_on(img, closest_x_m, closest_y_m, calibration, color, sz=10, img_o
   return u, v
 
 
-if platform.system() != 'Darwin':
-  matplotlib.use('QT4Agg')
-
-
 def init_plots(arr, name_to_arr_idx, plot_xlims, plot_ylims, plot_names, plot_colors, plot_styles, bigplots=False):
   color_palette = { "r": (1,0,0),
                     "g": (0,1,0),
@@ -173,8 +169,14 @@ def init_plots(arr, name_to_arr_idx, plot_xlims, plot_ylims, plot_names, plot_co
       fig.canvas.flush_events()
 
     raw_data = renderer.tostring_rgb()
-    #print fig.canvas.get_width_height()
-    plot_surface = pygame.image.frombuffer(raw_data, fig.canvas.get_width_height(), "RGB").convert()
+    x, y = fig.canvas.get_width_height()
+
+    # Handle 2x scaling
+    if len(raw_data) == 4 * x * y * 3:
+      plot_surface = pygame.image.frombuffer(raw_data, (2*x, 2*y), "RGB").convert()
+      plot_surface = pygame.transform.scale(plot_surface, (x, y))
+    else:
+      plot_surface = pygame.image.frombuffer(raw_data, fig.canvas.get_width_height(), "RGB").convert()
     return plot_surface
 
   return draw_plots

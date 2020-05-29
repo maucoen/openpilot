@@ -2,13 +2,13 @@
 # TODO: why are the keras models saved with python 2?
 from __future__ import print_function
 
-import tensorflow as tf
+import tensorflow as tf  # pylint: disable=import-error
 import os
 import sys
-import tensorflow.keras as keras
+import tensorflow.keras as keras # pylint: disable=import-error
 import numpy as np
-from tensorflow.keras.models import Model
-from tensorflow.keras.models import load_model
+from tensorflow.keras.models import Model # pylint: disable=import-error
+from tensorflow.keras.models import load_model # pylint: disable=import-error
 
 def read(sz):
   dd = []
@@ -34,6 +34,11 @@ def run_loop(m):
 
 if __name__ == "__main__":
   print(tf.__version__, file=sys.stderr)
+  # limit gram alloc
+  gpus = tf.config.experimental.list_physical_devices('GPU')
+  if len(gpus) > 0:
+    tf.config.experimental.set_virtual_device_configuration(gpus[0], [tf.config.experimental.VirtualDeviceConfiguration(memory_limit=2048)])
+
   m = load_model(sys.argv[1])
   print(m, file=sys.stderr)
   bs = [int(np.product(ii.shape[1:])) for ii in m.inputs]
@@ -50,4 +55,3 @@ if __name__ == "__main__":
   no = keras.layers.Concatenate()(m(tii))
   m = Model(inputs=ri, outputs=[no])
   run_loop(m)
-

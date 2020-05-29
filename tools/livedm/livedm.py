@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 import os
 import argparse
-import pygame
+import pygame  # pylint: disable=import-error
 import numpy as np
-import cv2
+import cv2  # pylint: disable=import-error
 
 from cereal import log
 import cereal.messaging as messaging
@@ -23,7 +23,7 @@ if __name__ == "__main__":
   poller = messaging.Poller()
 
   m = 'driverMonitoring'
-  sock = messaging.sub_sock(m, poller, addr=args.addr)
+  messaging.sub_sock(m, poller, addr=args.addr)
 
   pygame.init()
   pygame.display.set_caption('livedm')

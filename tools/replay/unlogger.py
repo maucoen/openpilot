@@ -4,10 +4,7 @@ import os
 import sys
 import zmq
 import time
-import gc
 import signal
-from threading import Thread
-import numpy as np
 from uuid import uuid4
 from collections import namedtuple
 from collections import deque
@@ -22,7 +19,6 @@ from cereal.services import service_list
 from cereal.messaging import pub_sock, MultiplePublishersError
 from common import realtime
 
-from tools.lib.file_helpers import mkdirs_exists_ok
 from tools.lib.kbhit import KBHit
 from tools.lib.logreader import MultiLogIterator
 from tools.lib.route import Route
@@ -425,7 +421,7 @@ def main(argv):
         if not p.is_alive():
           [p.terminate() for p in subprocesses.values()]
           exit()
-      signal.signal(signal.SIGCHLD, signal.SIGIGN)
+      signal.signal(signal.SIGCHLD, signal.SIG_IGN)
     signal.signal(signal.SIGCHLD, exit_if_children_dead)
 
     if args.interactive:
@@ -442,6 +438,7 @@ def main(argv):
         except TimeoutError:
           p.terminate()
           continue
+  return 0
 
 if __name__ == "__main__":
   sys.exit(main(sys.argv[1:]))

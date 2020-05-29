@@ -1,16 +1,13 @@
 #!/usr/bin/env python3
-import time
 import cereal.messaging as messaging
-from opendbc.can.parser import CANParser
 from opendbc.can.packer import CANPacker
-from selfdrive.boardd.boardd_api_impl import can_list_to_can_capnp
+from selfdrive.boardd.boardd_api_impl import can_list_to_can_capnp  # pylint: disable=no-name-in-module,import-error
 from selfdrive.car.honda.values import FINGERPRINTS, CAR
 from selfdrive.car import crc8_pedal
 import math
 
 from selfdrive.test.longitudinal_maneuvers.plant import get_car_can_parser
 cp = get_car_can_parser()
-#cp = CANParser("honda_civic_touring_2016_can_generated")
 
 packer = CANPacker("honda_civic_touring_2016_can_generated")
 rpacker = CANPacker("acura_ilx_2016_nidec")
@@ -20,7 +17,7 @@ SR = 7.5
 def angle_to_sangle(angle):
   return - math.degrees(angle) * SR
 
-def can_function(pm, speed, angle, idx, cruise_button=0):
+def can_function(pm, speed, angle, idx, cruise_button=0, is_engaged=False):
   msg = []
   msg.append(packer.make_can_msg("ENGINE_DATA", 0, {"XMISSION_SPEED": speed}, idx))
   msg.append(packer.make_can_msg("WHEEL_SPEEDS", 0,
@@ -50,6 +47,7 @@ def can_function(pm, speed, angle, idx, cruise_button=0):
   msg.append(packer.make_can_msg("CRUISE_PARAMS", 0, {}, idx))
   msg.append(packer.make_can_msg("CRUISE", 0, {}, idx))
   msg.append(packer.make_can_msg("SCM_FEEDBACK", 0, {"MAIN_ON": 1}, idx))
+  msg.append(packer.make_can_msg("POWERTRAIN_DATA", 0, {"ACC_STATUS": int(is_engaged)}, idx))
   #print(msg)
 
   # cam bus
@@ -77,27 +75,16 @@ def sendcan_function(sendcan):
   if cp.vl[0x1fa]['COMPUTER_BRAKE_REQUEST']:
     brake = cp.vl[0x1fa]['COMPUTER_BRAKE'] * 0.003906248
   else:
-    brake = 0.0 
+    brake = 0.0
 
   if cp.vl[0x200]['GAS_COMMAND'] > 0:
     gas = cp.vl[0x200]['GAS_COMMAND'] / 256.0
   else:
-    gas = 0.0 
+    gas = 0.0
 
   if cp.vl[0xe4]['STEER_TORQUE_REQUEST']:
     steer_torque = cp.vl[0xe4]['STEER_TORQUE']*1.0/0x1000
   else:
-    steer_torque = 0.0 
+    steer_torque = 0.0
 
   return (gas, brake, steer_torque)
-
-if __name__ == "__main__":
-  pm = messaging.PubMaster(['can'])
-  sendcan = messaging.sub_sock('sendcan')
-  idx = 0
-  while 1:
-    sendcan_function(sendcan)
-    can_function(pm, 10.0, idx)
-    time.sleep(0.01)
-    idx += 1
-
